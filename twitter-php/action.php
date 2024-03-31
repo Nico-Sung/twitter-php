@@ -20,22 +20,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 $userId = $requete->fetchColumn();
 
-                if($userId) {
+                if(!$userId) {
                     $requete = $database->prepare(
-                        'INSERT INTO tweets (message, author_id) VALUES (:message, :author_id)'
+                        'INSERT INTO users (pseudo) VALUES (:pseudo)'
                     );
                     $requete->execute([
-                        'message' => $message,
-                        'author_id' => $userId
+                        'pseudo' => $user
                     ]);
-                } else {
-                    $requete = $database->prepare(
-                        'INSERT INTO tweets (message) VALUES (:message)'
-                    );
-                    $requete->execute([
-                        'message' => $message
-                    ]);
+                    $userId = $database->lastInsertId();
                 }
+
+                $requete = $database->prepare(
+                    'INSERT INTO tweets (message, author_id) VALUES (:message, :author_id)'
+                );
+                $requete->execute([
+                    'message' => $message,
+                    'author_id' => $userId
+                ]);
 
                 header('Location: http://localhost/?user=' . urlencode($user));
                 exit();
@@ -43,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 die('Le champ message est vide.');
             }
         } else {
-            die('Aucun pseudo');
+            die('Aucun pseudo.');
         }
     } catch(PDOException $e) {
         die('Could not connect to the database $dbname :' . $e->getMessage());
